@@ -4,13 +4,15 @@ import { useEffect, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
 import { ContractViewer } from "./contract-viewer"
 import { RiskAnalysis } from "./risk-analysis"
 import { ImprovementSuggestions } from "./improvement-suggestions"
 import { SummaryReport } from "./summary-report"
 import { Doughnut, Bar } from 'react-chartjs-2';
-import { Chart, ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
-Chart.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
+import { Chart, ArcElement, Tooltip as ChartTooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
+Chart.register(ArcElement, ChartTooltip, Legend, BarElement, CategoryScale, LinearScale);
 
 interface ContractAnalysisResultProps {
   contractId: string
@@ -20,6 +22,8 @@ export function ContractAnalysisResult({ contractId }: ContractAnalysisResultPro
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("document")
+  const [highlightedClause, setHighlightedClause] = useState<string | null>(null)
+  const [selectedClause, setSelectedClause] = useState<any>(null)
 
   useEffect(() => {
     fetch(`/api/analysis/result?id=${contractId}`)
@@ -53,6 +57,45 @@ export function ContractAnalysisResult({ contractId }: ContractAnalysisResultPro
         backgroundColor: '#f59e42',
       },
     ],
+  };
+
+  // 텍스트에서 조항 강조 처리
+  const highlightText = (text: string, clause: any) => {
+    if (!clause || !clause.clause_content) return text;
+    
+    const clauseContent = clause.clause_content.trim();
+    const regex = new RegExp(`(${clauseContent.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    
+    return text.replace(regex, (match) => {
+      return `<mark class="bg-yellow-200 dark:bg-yellow-800 px-1 rounded cursor-pointer" data-clause-id="${clause.clause_number}">${match}</mark>`;
+    });
+  };
+
+  // 리스크 레벨에 따른 색상 반환
+  const getRiskColors = (riskLevel: string) => {
+    switch (riskLevel) {
+      case '높음':
+        return {
+          bg: 'bg-red-50 dark:bg-red-950',
+          border: 'border-red-200 dark:border-red-800',
+          text: 'text-red-700 dark:text-red-300',
+          badge: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+        };
+      case '중간':
+        return {
+          bg: 'bg-amber-50 dark:bg-amber-950',
+          border: 'border-amber-200 dark:border-amber-800',
+          text: 'text-amber-700 dark:text-amber-300',
+          badge: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+        };
+      default:
+        return {
+          bg: 'bg-green-50 dark:bg-green-950',
+          border: 'border-green-200 dark:border-green-800',
+          text: 'text-green-700 dark:text-green-300',
+          badge: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+        };
+    }
   };
 
   return (
@@ -91,7 +134,14 @@ export function ContractAnalysisResult({ contractId }: ContractAnalysisResultPro
                   </Button>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4 max-h-[600px] overflow-y-auto">
-                  <pre className="whitespace-pre-wrap text-sm leading-relaxed">{data.contractText}</pre>
+                  <div 
+                    className="whitespace-pre-wrap text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: highlightedClause 
+                        ? highlightText(data.contractText, data.clauses.find((c: any) => c.clause_number === highlightedClause))
+                        : data.contractText
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -100,28 +150,13 @@ export function ContractAnalysisResult({ contractId }: ContractAnalysisResultPro
             <Card>
               <CardContent className="space-y-6 pt-6">
                 {data.clauses.map((clause: any, idx: number) => {
-                  let riskColor = '';
-                  let riskBg = '';
-                  let riskLabel = '';
-                  if (clause.risk_level === '높음') {
-                    riskColor = 'text-red-600';
-                    riskBg = 'bg-red-50';
-                    riskLabel = '위험';
-                  } else if (clause.risk_level === '중간') {
-                    riskColor = 'text-amber-600';
-                    riskBg = 'bg-amber-50';
-                    riskLabel = '주의';
-                  } else {
-                    riskColor = 'text-green-600';
-                    riskBg = 'bg-green-50';
-                    riskLabel = '안전';
-                  }
+                  const colors = getRiskColors(clause.risk_level);
                   return (
-                    <div key={idx} className={`rounded-lg p-4 ${riskBg} border`}>
+                    <div key={idx} className={`rounded-lg p-4 ${colors.bg} border ${colors.border}`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${riskColor} border ${riskColor} border-opacity-30`}>
-                          {riskLabel}
-                        </span>
+                        <Badge className={colors.badge}>
+                          {clause.risk_level === '높음' ? '위험' : clause.risk_level === '중간' ? '주의' : '안전'}
+                        </Badge>
                         <span className="font-bold">{clause.clause_number} {clause.clause_title}</span>
                       </div>
                       <div className="mb-2 text-sm text-gray-800">{clause.clause_content}</div>
@@ -233,15 +268,79 @@ export function ContractAnalysisResult({ contractId }: ContractAnalysisResultPro
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">주요 리스크 요소</p>
-                <ul className="list-disc list-inside text-sm mt-1 space-y-1">
-                  {data.mainRisks?.map((risk: string, idx: number) => (
-                    <li key={idx}>{risk}</li>
-                  ))}
-                </ul>
+                <p className="text-sm text-muted-foreground mb-2">주요 리스크 요소</p>
+                <div className="space-y-2">
+                  {data.clauses?.filter((clause: any) => clause.risk_level === '높음' || clause.risk_level === '중간').map((clause: any, idx: number) => {
+                    const colors = getRiskColors(clause.risk_level);
+                    return (
+                      <TooltipProvider key={idx}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div 
+                              className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${colors.bg} ${colors.border}`}
+                              onClick={() => {
+                                setHighlightedClause(clause.clause_number);
+                                setSelectedClause(clause);
+                                setActiveTab("document");
+                              }}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <Badge className={colors.badge} variant="secondary">
+                                  {clause.risk_level === '높음' ? '위험' : '주의'}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">점수: {clause.risk_score}</span>
+                              </div>
+                              <div className="font-medium text-sm mb-1">{clause.clause_number} {clause.clause_title}</div>
+                              <div className="text-xs text-muted-foreground line-clamp-2">{clause.clause_content}</div>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-sm">
+                            <div className="space-y-2">
+                              <div className="font-medium">{clause.clause_number} {clause.clause_title}</div>
+                              <div className="text-sm">{clause.risk_analysis}</div>
+                              {clause.improvement && (
+                                <div className="pt-2 border-t">
+                                  <div className="text-xs font-medium text-emerald-600 mb-1">개선 제안:</div>
+                                  <div className="text-xs">{clause.improvement.explanation}</div>
+                                </div>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="pt-4 border-t">
-                <Button className="w-full bg-rose-600 hover:bg-rose-700">개선된 계약서 다운로드</Button>
+              <div className="pt-4 border-t space-y-2">
+                <Button 
+                  className="w-full bg-rose-600 hover:bg-rose-700"
+                  onClick={() => {
+                    window.open(`/api/analysis/download?id=${contractId}&type=improved`, '_blank');
+                  }}
+                >
+                  개선된 계약서 다운로드
+                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      window.open(`/api/analysis/download?id=${contractId}&type=report`, '_blank');
+                    }}
+                  >
+                    분석 보고서
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      window.open(`/api/analysis/download?id=${contractId}&type=template`, '_blank');
+                    }}
+                  >
+                    NDA 템플릿
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

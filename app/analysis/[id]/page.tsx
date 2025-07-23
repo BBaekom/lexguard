@@ -1,3 +1,5 @@
+"use client"
+
 import { ContractAnalysisResult } from "@/components/contract-analysis-result"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Download, Share } from "lucide-react"
@@ -9,7 +11,7 @@ interface AnalysisPageProps {
   }
 }
 
-export default async function AnalysisPage({ params }: AnalysisPageProps) {
+export default function AnalysisPage({ params }: AnalysisPageProps) {
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between mb-8">
@@ -26,9 +28,15 @@ export default async function AnalysisPage({ params }: AnalysisPageProps) {
             <Share className="h-4 w-4 mr-2" />
             공유
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              window.open(`/api/analysis/download?id=${params.id}&type=improved`, '_blank');
+            }}
+          >
             <Download className="h-4 w-4 mr-2" />
-            다운로드
+            개선된 계약서
           </Button>
         </div>
       </div>
