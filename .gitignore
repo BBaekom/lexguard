@@ -17,7 +17,7 @@ pnpm-debug.log*
 
 # env files
 .env*
-!.env.example
+.env*.local
 
 # vercel
 .vercel
@@ -35,3 +35,10 @@ next-env.d.ts
 
 # test coverage
 coverage/
+
+/.pnp
+.pnp.js
+
+/coverage
+
+*.pem
