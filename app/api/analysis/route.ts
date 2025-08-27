@@ -1,5 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { NextRequest, NextResponse } from "next/server"
+import { GoogleGenerativeAI } from "@google/generative-ai"
+import { writeFile, mkdir } from "fs/promises"
+import { join } from "path"
+import { existsSync } from "fs"
+
+// ✅ Edge에서 발생하는 크기/타임아웃/스트리밍 이슈 회피
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -7,6 +14,8 @@ declare global {
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+const INDEX_UNIT = 'utf16' as const;
 
 const getAnalysisPrompt = (contractText: string) => `
 너는 계약서 분석을 전문으로 하는 변호사야. 아래 계약서 텍스트를 분석해서 다음과 같은 JSON 객체로만 결과를 반환해줘.
@@ -58,9 +67,35 @@ ${contractText}
 export async function POST(req: NextRequest) {
   try {
     console.log('계약서 분석 요청 받음');
-    const { text } = await req.json();
+    const { text, originalFile } = await req.json();
+    
     if (!text) {
       return NextResponse.json({ error: '계약서 텍스트가 필요합니다.' }, { status: 400 });
+    }
+
+    // 원본 파일이 있으면 저장
+    let contractFilePath = null;
+    if (originalFile && originalFile.name && originalFile.content) {
+      try {
+        // uploads 디렉토리 생성
+        const uploadsDir = join(process.cwd(), 'public', 'uploads');
+        if (!existsSync(uploadsDir)) {
+          await mkdir(uploadsDir, { recursive: true });
+        }
+
+        // 파일 저장
+        const fileName = `contract_${Date.now()}_${originalFile.name}`;
+        const filePath = join(uploadsDir, fileName);
+        const fileContent = Buffer.from(originalFile.content, 'base64');
+        
+        await writeFile(filePath, fileContent);
+        contractFilePath = `/uploads/${fileName}`;
+        
+        console.log('원본 파일 저장 완료:', contractFilePath);
+      } catch (fileError) {
+        console.error('파일 저장 중 오류:', fileError);
+        // 파일 저장 실패해도 분석은 계속 진행
+      }
     }
 
     const model = genAI.getGenerativeModel({
@@ -76,8 +111,11 @@ export async function POST(req: NextRequest) {
     let analysisResult;
     try {
       analysisResult = JSON.parse(response.text());
-      // 원본 텍스트를 직접 추가 (LLM이 반환하지 않음)
+      // 원본 텍스트와 파일 경로를 직접 추가
       analysisResult.contractText = text;
+      if (contractFilePath) {
+        analysisResult.contract_file_path = contractFilePath;
+      }
     } catch (e) {
       return NextResponse.json({ error: 'Gemini 응답 파싱 실패', raw: response.text() }, { status: 500 });
     }
