@@ -969,18 +969,7 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
 
                   </div>
                   
-                  {/* 디버깅 정보 (개발용) */}
-                  <details className="mt-6">
-                    <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                      🔍 디버깅 정보 보기
-                    </summary>
-                    <div className="mt-2 p-4 bg-gray-100 rounded text-xs">
-                      <strong>데이터 정보:</strong><br/>
-                      clause_analysis 개수: {data.clause_analysis?.length || 0}<br/>
-                      original_contract_text 길이: {data.original_contract_text?.length || 0}<br/>
-                      첫 번째 조항 데이터: {data.clause_analysis?.[0] ? JSON.stringify(data.clause_analysis[0], null, 2) : '없음'}
-                    </div>
-                  </details>
+
                 </CardContent>
               </Card>
             </div>

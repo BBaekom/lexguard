@@ -11,6 +11,15 @@ import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "../../lib/supabase/client"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function RegisterPage() {
   const [name, setName] = useState("")
@@ -19,6 +28,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -51,8 +61,7 @@ export default function RegisterPage() {
     if (error) {
       alert(`회원가입 중 오류가 발생했습니다: ${error.message}`)
     } else {
-      alert("회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.")
-      router.push("/login")
+      setShowSuccessDialog(true)
     }
   }
 
@@ -134,6 +143,23 @@ export default function RegisterPage() {
           </form>
         </Card>
       </div>
+
+      {/* 회원가입 완료 팝업 */}
+      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>회원가입 완료</AlertDialogTitle>
+            <AlertDialogDescription>
+              회원가입이 성공적으로 완료되었습니다. 로그인 페이지로 이동합니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => router.push("/login")}>
+              확인
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
