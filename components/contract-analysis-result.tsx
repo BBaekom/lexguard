@@ -809,26 +809,33 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                     
                     const colors = getRiskColors(riskLevel);
                     return (
-                      <div key={idx} className={`rounded-lg p-4 ${colors.bg} border ${colors.border} clause-analysis-block`}>
-                        <div className="flex items-center gap-3 mb-3">
+                      <div key={idx} className={`rounded-lg p-6 ${colors.bg} border ${colors.border} clause-analysis-block`}>
+                        {/* 조항 헤더 - 더 넓은 여백과 명확한 구분 */}
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
                           <Badge className={`${colors.badge} font-bold text-sm px-3 py-1`}>
                             {colors.label}
                           </Badge>
                           <span className="font-bold text-lg">{clause.original_identifier || clause.clause_id}</span>
                           <span className="text-sm text-gray-600">점수: {riskScore}</span>
                         </div>
-                        <div className="mb-3 text-sm text-gray-800 bg-white p-3 rounded border">
-                          {clause.original_text}
+                        
+                        {/* 조항 본문 - 더 넓은 여백과 가독성 향상 */}
+                        <div className="mb-6 text-sm text-gray-800 bg-white p-4 rounded border shadow-sm">
+                          <div className="leading-relaxed">
+                            {clause.original_text}
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground mb-3">
-                          <strong>리스크 분석:</strong> 
-                          <div className="whitespace-pre-line mt-1 max-h-none overflow-visible">
+                        
+                        {/* 리스크 분석 - 충분한 하단 여백 확보 */}
+                        <div className="text-sm text-muted-foreground mb-4">
+                          <strong className="text-base">리스크 분석:</strong> 
+                          <div className="whitespace-pre-line mt-3 max-h-none overflow-visible">
                             {riskLevel === 'UNKNOWN' ? (
-                              <div className="text-sm text-sky-600 font-medium">
+                              <div className="text-sm text-sky-600 font-medium p-3 bg-sky-50 rounded border border-sky-200">
                                 고려할만한 리스크가 검출되지 않았습니다.
                               </div>
                             ) : (
-                              <pre className="text-sm whitespace-pre-wrap break-words font-sans">
+                              <pre className="text-sm whitespace-pre-wrap break-words font-sans leading-relaxed p-3 bg-gray-50 rounded border">
                                 {formatRiskAnalysisText(getCompleteText(filteredExplanation))}
                               </pre>
                             )}
@@ -839,16 +846,33 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                   }) || data.clauses?.map((clause: any, idx: number) => {
                     const colors = getRiskColors(clause.risk_level);
                     return (
-                      <div key={idx} className={`rounded-lg p-4 ${colors.bg} border ${colors.border} clause-analysis-block`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className={colors.badge}>
+                      <div key={idx} className={`rounded-lg p-6 ${colors.bg} border ${colors.border} clause-analysis-block`}>
+                        {/* 조항 헤더 - 더 넓은 여백과 명확한 구분 */}
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
+                          <Badge className={`${colors.badge} font-bold text-sm px-3 py-1`}>
                             {clause.risk_level === '높음' ? '위험' : clause.risk_level === '중간' ? '주의' : '안전'}
                           </Badge>
-                          <span className="font-bold">{clause.clause_number} {clause.clause_title}</span>
+                          <span className="font-bold text-lg">{clause.clause_number} {clause.clause_title}</span>
                         </div>
-                        <div className="mb-2 text-sm text-gray-800">{clause.clause_content}</div>
-                        <div className="mb-1 text-xs text-gray-500">리스크 점수: <b>{clause.risk_score}</b></div>
-                        <div className="text-sm text-muted-foreground">{clause.risk_analysis}</div>
+                        
+                        {/* 조항 본문 - 더 넓은 여백과 가독성 향상 */}
+                        <div className="mb-6 text-sm text-gray-800 bg-white p-4 rounded border shadow-sm">
+                          <div className="leading-relaxed">
+                            {clause.clause_content}
+                          </div>
+                        </div>
+                        
+                        {/* 리스크 정보 - 충분한 하단 여백 확보 */}
+                        <div className="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded border">
+                          <strong>리스크 점수:</strong> <span className="font-bold text-lg">{clause.risk_score}</span>
+                        </div>
+                        
+                        <div className="text-sm text-muted-foreground">
+                          <strong className="text-base">리스크 분석:</strong>
+                          <div className="mt-3 p-3 bg-white rounded border leading-relaxed">
+                            {clause.risk_analysis}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
