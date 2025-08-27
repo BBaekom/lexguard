@@ -319,7 +319,45 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
     labels: ['리스크 점수', '안전 점수'],
     datasets: [
       {
-        data: [data.overall_risk_assessment?.risk_score ?? data.summary?.riskScore ?? 0, 100 - (data.overall_risk_assessment?.risk_score ?? data.summary?.riskScore ?? 0)],
+        data: [
+          // "지금으로도 충분합니다."인 조항들을 제외한 실제 리스크 점수 계산
+          (() => {
+            if (data.clause_analysis && data.clause_analysis.length > 0) {
+              const validClauses = data.clause_analysis.filter((clause: any) => 
+                !clause.risk_assessment?.recommendations?.some((rec: string) => 
+                  rec.trim() === "지금으로도 충분합니다." || 
+                  rec.trim() === "지금으로도 충분합니다"
+                )
+              );
+              
+              if (validClauses.length > 0) {
+                const totalRiskScore = validClauses.reduce((sum: number, clause: any) => 
+                  sum + (clause.risk_assessment?.risk_score || 0), 0
+                );
+                return Math.round(totalRiskScore / validClauses.length);
+              }
+            }
+            return data.overall_risk_assessment?.risk_score ?? data.summary?.riskScore ?? 0;
+          })(),
+          100 - (() => {
+            if (data.clause_analysis && data.clause_analysis.length > 0) {
+              const validClauses = data.clause_analysis.filter((clause: any) => 
+                !clause.risk_assessment?.recommendations?.some((rec: string) => 
+                  rec.trim() === "지금으로도 충분합니다." || 
+                  rec.trim() === "지금으로도 충분합니다"
+                )
+              );
+              
+              if (validClauses.length > 0) {
+                const totalRiskScore = validClauses.reduce((sum: number, clause: any) => 
+                  sum + (clause.risk_assessment?.risk_score || 0), 0
+                );
+                return Math.round(totalRiskScore / validClauses.length);
+              }
+            }
+            return data.overall_risk_assessment?.risk_score ?? data.summary?.riskScore ?? 0;
+          })()
+        ],
         backgroundColor: ['rgb(245, 158, 11)', '#e5e7eb'], // rgb(245, 158, 11) = bg-amber-500 (계약서 정보 탭 그래프 색상과 동일)
         borderWidth: 0,
       },
@@ -333,8 +371,17 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
     datasets: [
       {
         label: '조항별 리스크 점수',
-        data: data.clause_analysis?.map((clause: any) => clause.risk_assessment?.risk_score) ?? 
-               data.clauses?.map((clause: any) => clause.risk_score) ?? [],
+        data: data.clause_analysis?.map((clause: any) => {
+          // recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로 처리
+          if (clause.risk_assessment?.recommendations?.some((rec: string) => 
+            rec.trim() === "지금으로도 충분합니다." || 
+            rec.trim() === "지금으로도 충분합니다"
+          )) {
+            return 0;
+          }
+          return clause.risk_assessment?.risk_score ?? 0;
+        }) ?? 
+        data.clauses?.map((clause: any) => clause.risk_score) ?? [],
         backgroundColor: (data.clause_analysis?.map(() => 'rgb(245, 158, 11)') ?? data.clauses?.map(() => 'rgb(245, 158, 11)') ?? []), // rgb(245, 158, 11) = bg-amber-500 (계약서 정보 탭 그래프 색상과 동일)
       },
     ],
@@ -426,12 +473,12 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
         };
       default:
         return {
-          bg: 'bg-gray-50 dark:bg-gray-950',
-          border: 'border-gray-200 dark:border-gray-800',
-          text: 'text-gray-700 dark:text-gray-300',
-          badge: 'bg-gray-500 text-white dark:bg-gray-600 dark:text-white',
+          bg: 'bg-sky-50 dark:bg-sky-950',
+          border: 'border-sky-200 dark:border-sky-800',
+          text: 'text-sky-700 dark:text-sky-300',
+          badge: 'bg-sky-500 text-white dark:bg-sky-600 dark:text-white',
           label: '안전',
-          highlight: 'bg-gray-100/50 dark:bg-gray-700/50' // 형관펜 효과용 색상 추가 - 섬세하게
+          highlight: 'bg-sky-100/50 dark:bg-sky-700/50' // 형관펜 효과용 색상 추가 - 하늘색
         };
     }
   };
@@ -576,33 +623,64 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
     
     revisedClauses.forEach((clause, idx) => {
       const revisedClauseText = clause.revised_text || '';
+      const originalClauseText = clause.original_text || '';
       const revisedSpans = clause.revised_spans || [];
       
       if (!revisedClauseText) return;
 
+      // recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로, 등급을 UNKNOWN으로 처리
+      let riskLevel = clause.risk_assessment?.risk_level || 'UNKNOWN';
+      let riskScore = clause.risk_assessment?.risk_score || 0;
+      
+      if (clause.risk_assessment?.recommendations?.some((rec: string) => 
+        rec.trim() === "지금으로도 충분합니다." || 
+        rec.trim() === "지금으로도 충분합니다"
+      )) {
+        riskLevel = 'UNKNOWN';
+        riskScore = 0;
+      }
+
+      // UNKNOWN 등급인 경우 원문 텍스트 사용, 그 외에는 revised_text 사용
+      const displayText = riskLevel === 'UNKNOWN' ? originalClauseText : revisedClauseText;
+
       // revised_spans가 있으면 변동사항만 형광펜 효과
-      if (revisedSpans.length > 0) {
+      if (revisedSpans.length > 0 && riskLevel !== 'UNKNOWN') {
         result.push(
           <div key={`clause-${idx}`} className="mb-4">
             <div className="text-sm font-medium text-gray-600 mb-2">
               {clause.original_identifier || clause.clause_id}
             </div>
-            {renderHighlightedText(revisedClauseText, revisedSpans, clause.risk_assessment?.risk_level || 'UNKNOWN')}
+            {renderHighlightedText(revisedClauseText, revisedSpans, riskLevel)}
           </div>
         );
       } else {
-        // revised_spans가 없으면 전체 텍스트를 리스크 레벨 색상으로
-        const colors = getRiskColors(clause.risk_assessment?.risk_level);
-        result.push(
-          <div key={`clause-${idx}`} className="mb-4">
-            <div className="text-sm font-medium text-gray-600 mb-2">
-              {clause.original_identifier || clause.clause_id}
+        // revised_spans가 없거나 UNKNOWN 등급인 경우
+        if (riskLevel === 'UNKNOWN') {
+          // UNKNOWN 등급인 경우 형광펜 효과 없이 원문 텍스트만 표시
+          result.push(
+            <div key={`clause-${idx}`} className="mb-4">
+              <div className="text-sm font-medium text-gray-600 mb-2">
+                {clause.original_identifier || clause.clause_id}
+              </div>
+              <span className="text-gray-800">
+                {displayText}
+              </span>
             </div>
-            <span className={`px-2 py-1 rounded ${colors.highlight} text-gray-800`}>
-              {revisedClauseText}
-            </span>
-          </div>
-        );
+          );
+        } else {
+          // 다른 등급인 경우 형광펜 효과 적용
+          const colors = getRiskColors(riskLevel);
+          result.push(
+            <div key={`clause-${idx}`} className="mb-4">
+              <div className="text-sm font-medium text-gray-600 mb-2">
+                {clause.original_identifier || clause.clause_id}
+              </div>
+              <span className={`px-2 py-1 rounded ${colors.highlight} text-gray-800`}>
+                {displayText}
+              </span>
+            </div>
+          );
+        }
       }
     });
 
@@ -644,7 +722,16 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                             labels: data.clause_analysis.map((clause: any) => clause.original_identifier || clause.clause_id),
                             datasets: [{
                               label: '조항별 리스크 점수',
-                              data: data.clause_analysis.map((clause: any) => clause.risk_assessment.risk_score),
+                              data: data.clause_analysis.map((clause: any) => {
+                                // recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로 처리
+                                if (clause.risk_assessment?.recommendations?.some((rec: string) => 
+                                  rec.trim() === "지금으로도 충분합니다." || 
+                                  rec.trim() === "지금으로도 충분합니다"
+                                )) {
+                                  return 0;
+                                }
+                                return clause.risk_assessment?.risk_score ?? 0;
+                              }),
                               backgroundColor: '#d97706' // amber-600 색상으로 고정 (전체 리스크 점수 글자 색상과 동일)
                             }]
                           }}
@@ -708,7 +795,19 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                       filteredExplanation = filteredItems.join('\n');
                     }
                     
-                    const colors = getRiskColors(clause.risk_assessment.risk_level);
+                    // recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로, 등급을 UNKNOWN으로 처리
+                    let riskLevel = clause.risk_assessment?.risk_level || 'UNKNOWN';
+                    let riskScore = clause.risk_assessment?.risk_score || 0;
+                    
+                    if (clause.risk_assessment?.recommendations?.some((rec: string) => 
+                      rec.trim() === "지금으로도 충분합니다." || 
+                      rec.trim() === "지금으로도 충분합니다"
+                    )) {
+                      riskLevel = 'UNKNOWN';
+                      riskScore = 0;
+                    }
+                    
+                    const colors = getRiskColors(riskLevel);
                     return (
                       <div key={idx} className={`rounded-lg p-4 ${colors.bg} border ${colors.border} clause-analysis-block`}>
                         <div className="flex items-center gap-3 mb-3">
@@ -716,7 +815,7 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                             {colors.label}
                           </Badge>
                           <span className="font-bold text-lg">{clause.original_identifier || clause.clause_id}</span>
-                          <span className="text-sm text-gray-600">점수: {clause.risk_assessment.risk_score}</span>
+                          <span className="text-sm text-gray-600">점수: {riskScore}</span>
                         </div>
                         <div className="mb-3 text-sm text-gray-800 bg-white p-3 rounded border">
                           {clause.original_text}
@@ -724,9 +823,15 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                         <div className="text-sm text-muted-foreground mb-3">
                           <strong>리스크 분석:</strong> 
                           <div className="whitespace-pre-line mt-1 max-h-none overflow-visible">
-                            <pre className="text-sm whitespace-pre-wrap break-words font-sans">
-                              {formatRiskAnalysisText(getCompleteText(filteredExplanation))}
-                            </pre>
+                            {riskLevel === 'UNKNOWN' ? (
+                              <div className="text-sm text-sky-600 font-medium">
+                                고려할만한 리스크가 검출되지 않았습니다.
+                              </div>
+                            ) : (
+                              <pre className="text-sm whitespace-pre-wrap break-words font-sans">
+                                {formatRiskAnalysisText(getCompleteText(filteredExplanation))}
+                              </pre>
+                            )}
                           </div>
                         </div>
                       </div>
