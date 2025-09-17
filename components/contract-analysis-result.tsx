@@ -485,7 +485,7 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
 
 
 
-  // revised_spans를 활용하여 형관펜 효과가 적용된 텍스트 렌더링 (툴팁 없음)
+  // revised_spans를 활용하여 변동사항을 강조 표시 (PDF 최적화)
   const renderHighlightedText = (text: string, spans: any[], riskLevel: string) => {
     if (!text || !spans || spans.length === 0) {
       return <span>{text}</span>;
@@ -508,12 +508,55 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
         );
       }
 
-      // span에 해당하는 텍스트를 형관펜 효과로 렌더링 (툴팁 없음)
+      // span에 해당하는 텍스트를 변동사항으로 강조 표시
       const spanText = text.slice(span.start, span.end);
-      const spanClass = `px-0.5 py-0 rounded font-medium ${colors.highlight} text-black dark:text-white`;
+      
+      // 위험도에 따른 스타일 (PDF에서 잘 보이도록)
+      const getRiskStyle = (level: string) => {
+        switch (level) {
+          case 'HIGH':
+            return {
+              backgroundColor: '#fef2f2',
+              padding: '2px 6px',
+              fontWeight: '600',
+              color: '#991b1b',
+              borderRadius: '4px'
+            };
+          case 'MEDIUM':
+            return {
+              backgroundColor: '#fef3c7',
+              padding: '2px 6px',
+              fontWeight: '600',
+              color: '#92400e',
+              borderRadius: '4px'
+            };
+          case 'LOW':
+            return {
+              backgroundColor: '#f0fdf4',
+              padding: '2px 6px',
+              fontWeight: '600',
+              color: '#065f46',
+              borderRadius: '4px'
+            };
+          default:
+            return {
+              backgroundColor: '#f0f9ff',
+              padding: '2px 6px',
+              fontWeight: '600',
+              color: '#1e40af',
+              borderRadius: '4px'
+            };
+        }
+      };
+
+      const spanStyle = getRiskStyle(riskLevel);
       
       result.push(
-        <span key={`span-${index}`} className={spanClass}>
+        <span 
+          key={`span-${index}`} 
+          className="inline-block rounded"
+          style={spanStyle}
+        >
           {spanText}
         </span>
       );
@@ -668,16 +711,57 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
             </div>
           );
         } else {
-          // 다른 등급인 경우 형광펜 효과 적용
-          const colors = getRiskColors(riskLevel);
+          // 다른 등급인 경우 변동사항 강조 표시
+          const getRiskStyle = (level: string) => {
+            switch (level) {
+              case 'HIGH':
+                return {
+                  backgroundColor: '#fef2f2',
+                  padding: '8px 12px',
+                  fontWeight: '500',
+                  color: '#991b1b',
+                  borderRadius: '4px'
+                };
+              case 'MEDIUM':
+                return {
+                  backgroundColor: '#fef3c7',
+                  padding: '8px 12px',
+                  fontWeight: '500',
+                  color: '#92400e',
+                  borderRadius: '4px'
+                };
+              case 'LOW':
+                return {
+                  backgroundColor: '#f0fdf4',
+                  padding: '8px 12px',
+                  fontWeight: '500',
+                  color: '#065f46',
+                  borderRadius: '4px'
+                };
+              default:
+                return {
+                  backgroundColor: '#f0f9ff',
+                  padding: '8px 12px',
+                  fontWeight: '500',
+                  color: '#1e40af',
+                  borderRadius: '4px'
+                };
+            }
+          };
+
+          const clauseStyle = getRiskStyle(riskLevel);
+          
           result.push(
             <div key={`clause-${idx}`} className="mb-4">
               <div className="text-sm font-medium text-gray-600 mb-2">
                 {clause.original_identifier || clause.clause_id}
               </div>
-              <span className={`px-2 py-1 rounded ${colors.highlight} text-gray-800`}>
+              <div 
+                className="rounded"
+                style={clauseStyle}
+              >
                 {displayText}
-              </span>
+              </div>
             </div>
           );
         }
