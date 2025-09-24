@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Mistral } from "@mistralai/mistralai"
+import { normalizeContractTextSafe } from '@/lib/normalize'
 
 const apiKey = process.env.MISTRAL_API_KEY
 
@@ -50,7 +51,31 @@ export async function POST(req: NextRequest) {
       .map((page: any) => page.markdown)
       .join('\n\n')
 
-    return NextResponse.json({ text: allText })
+    // OCR 직후 특수문자 처리
+    const normalizedText = normalizeContractTextSafe(allText, {
+      typography: 'safe',
+      legalSymbols: true,
+      listFormatting: true
+    })
+
+    // UTF-8 인코딩 확인 및 BOM 추가
+    const textEncoder = new TextEncoder()
+    const textBytes = textEncoder.encode(normalizedText)
+    
+    // UTF-8 BOM 추가
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF])
+    const contentWithBom = new Uint8Array(bom.length + textBytes.length)
+    contentWithBom.set(bom)
+    contentWithBom.set(textBytes, bom.length)
+
+    return NextResponse.json({ 
+      text: normalizedText,  // 처리된 텍스트 반환
+      originalText: allText, // 원본 텍스트도 함께 반환 (필요시)
+      encoding: 'utf-8',
+      textLength: normalizedText.length,
+      originalLength: allText.length,
+      bytesLength: contentWithBom.length
+    })
   } catch (error) {
     console.error("OCR processing failed:", error)
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
