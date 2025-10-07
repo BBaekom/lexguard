@@ -437,12 +437,12 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
     switch (riskLevel?.toUpperCase()) {
       case 'CRITICAL':
         return {
-          bg: 'bg-red-100 dark:bg-red-900',
-          border: 'border-red-300 dark:border-red-700',
-          text: 'text-red-800 dark:text-red-200',
-          badge: 'bg-red-600 text-white dark:bg-red-700 dark:text-white',
+          bg: 'bg-purple-100 dark:bg-purple-900',
+          border: 'border-purple-300 dark:border-purple-700',
+          text: 'text-purple-800 dark:text-purple-200',
+          badge: 'bg-purple-600 text-white dark:bg-purple-700 dark:text-white',
           label: '매우높음',
-          highlight: 'bg-red-200/60 dark:bg-red-800/60' // 형관펜 효과용 색상 추가 - 섬세하게
+          highlight: 'bg-purple-200 text-purple-800' // 보라색 계열로 변경
         };
       case 'HIGH':
         return {
@@ -514,6 +514,14 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
       // 위험도에 따른 스타일 (PDF에서 잘 보이도록)
       const getRiskStyle = (level: string) => {
         switch (level) {
+          case 'CRITICAL':
+            return {
+              backgroundColor: '#f3e8ff',
+              padding: '2px 6px',
+              fontWeight: '600',
+              color: '#7c3aed',
+              borderRadius: '4px'
+            };
           case 'HIGH':
             return {
               backgroundColor: '#fef2f2',
@@ -716,6 +724,14 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
           // 다른 등급인 경우 변동사항 강조 표시
           const getRiskStyle = (level: string) => {
             switch (level) {
+              case 'CRITICAL':
+                return {
+                  backgroundColor: '#f3e8ff',
+                  padding: '8px 12px',
+                  fontWeight: '600',
+                  color: '#7c3aed',
+                  borderRadius: '4px'
+                };
               case 'HIGH':
                 return {
                   backgroundColor: '#fef2f2',
@@ -753,10 +769,17 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
 
           const clauseStyle = getRiskStyle(riskLevel);
           
+          // 디버깅 로그
+          console.log('계약서 개정안 - 조항:', {
+            clause_id: clause.clause_id,
+            risk_level: riskLevel,
+            style: clauseStyle
+          });
+          
           result.push(
             <div key={`clause-${idx}`} className="mb-4">
               <div className="text-sm font-medium text-gray-600 mb-2">
-                {clause.original_identifier || clause.clause_id}
+                {clause.original_identifier || clause.clause_id} ({riskLevel})
               </div>
               <div 
                 className="rounded"
