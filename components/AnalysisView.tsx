@@ -72,7 +72,21 @@ export default function AnalysisView({ data, raw }: { data: AnalysisResponse; ra
                     </>
                   ) : null}
                   <div className="text-xs text-slate-500 mt-1">권고</div>
-                  <ul className="list-disc ml-5">{(c.risk_assessment.recommendations||[]).slice(0,3).map((r,i)=><li key={i}>{r}</li>)}</ul>
+                  <ul className="list-disc ml-5">
+                    {(() => {
+                      const ra = c?.risk_assessment;
+                      const level = String(ra?.risk_level ?? '').toUpperCase().trim();
+                      
+                      // UNKNOWN이면 "지금으로도 충분합니다." 강제
+                      if (level === 'UNKNOWN') {
+                        return <li key="unknown">지금으로도 충분합니다.</li>;
+                      }
+                      
+                      // 병합 결과만 사용, fallback 금지
+                      const recommendations = Array.isArray(ra?.recommendations) ? ra.recommendations : [];
+                      return recommendations.slice(0,3).map((r,i)=><li key={i}>{r}</li>);
+                    })()}
+                  </ul>
                 </td>
                 <td className="p-2 align-top">
                   <details>

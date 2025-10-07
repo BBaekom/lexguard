@@ -654,22 +654,24 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
       return <span>{originalText}</span>;
     }
 
-    // revised_text가 있는 조항들만 필터링
-    const revisedClauses = clauses.filter(clause => clause.revised_text);
+    // 모든 조항을 표시하되, revised_text가 있으면 그것을 사용하고 없으면 original_text 사용
+    const allClauses = clauses || [];
     
-    if (revisedClauses.length === 0) {
+    if (allClauses.length === 0) {
       return <span>{originalText}</span>;
     }
 
     // revised_text들을 인라인으로 연결하고 변동사항만 형광펜 효과
     const result: React.ReactElement[] = [];
     
-    revisedClauses.forEach((clause, idx) => {
+    allClauses.forEach((clause, idx) => {
       const revisedClauseText = clause.revised_text || '';
       const originalClauseText = clause.original_text || '';
       const revisedSpans = clause.revised_spans || [];
       
-      if (!revisedClauseText) return;
+      // revised_text가 없으면 original_text 사용
+      const displayClauseText = revisedClauseText || originalClauseText;
+      if (!displayClauseText) return;
 
       // recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로, 등급을 UNKNOWN으로 처리
       let riskLevel = clause.risk_assessment?.risk_level || 'UNKNOWN';
@@ -683,8 +685,8 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
         riskScore = 0;
       }
 
-      // UNKNOWN 등급인 경우 원문 텍스트 사용, 그 외에는 revised_text 사용
-      const displayText = riskLevel === 'UNKNOWN' ? originalClauseText : revisedClauseText;
+      // UNKNOWN 등급인 경우 원문 텍스트 사용, 그 외에는 revised_text 사용 (없으면 original_text)
+      const displayText = riskLevel === 'UNKNOWN' ? originalClauseText : (revisedClauseText || originalClauseText);
 
       // revised_spans가 있으면 변동사항만 형광펜 효과
       if (revisedSpans.length > 0 && riskLevel !== 'UNKNOWN') {
@@ -968,41 +970,43 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
             <div id="improvements-tab-content" data-tab="improvements" ref={improvementsRef}>
               <Card>
                 <CardContent className="space-y-6 pt-6">
-                {data.clause_analysis?.map((clause: any, idx: number) => (
-                  <div key={idx} className="rounded-lg border p-4 bg-gray-50 improvement-item">
-                    <div className="font-bold mb-2">{clause.original_identifier || clause.clause_id}</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1">기존 조항</div>
-                        <div className="text-sm">{clause.original_text}</div>
+                {data.clause_analysis?.map((clause: any, idx: number) => {
+                  const ra = clause?.risk_assessment;
+                  let level = String(ra?.risk_level ?? '').toUpperCase().trim();
+                  
+                  // 리스크 분석 탭과 동일한 로직 적용
+                  if (ra?.recommendations?.some((rec: string) => 
+                    rec.includes("지금으로도 충분합니다") || 
+                    rec.includes("고려할만한 리스크가 검출되지 않았습니다")
+                  )) {
+                    level = 'UNKNOWN';
+                  }
+                  
+                  // UNKNOWN 등급이면 "지금으로도 충분합니다." 강제
+                  const firstReco = level === 'UNKNOWN' 
+                    ? '지금으로도 충분합니다.' 
+                    : (Array.isArray(ra?.recommendations) ? ra.recommendations[0] : undefined);
+                  
+                  return (
+                    <div key={idx} className="rounded-lg border p-4 bg-gray-50 improvement-item">
+                      <div className="font-bold mb-2">
+                        {clause.original_identifier || clause.clause_id}
                       </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1">제안 내용</div>
-                        <div className="text-sm font-medium text-emerald-700">
-                          {clause.risk_assessment?.recommendations?.[0] || '개선 제안이 없습니다.'}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">기존 조항</div>
+                          <div className="text-sm">{clause.original_text}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">제안 내용</div>
+                          <div className="text-sm font-medium text-emerald-700">
+                            {firstReco || '개선 제안이 없습니다.'}
+                          </div>
                         </div>
                       </div>
                     </div>
-
-                  </div>
-                )) || data.clauses?.map((clause: any, idx: number) => (
-                  <div key={idx} className="rounded-lg border p-4 bg-gray-50 improvement-item">
-                    <div className="font-bold mb-2">{clause.clause_number} {clause.clause_title}</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1">기존 조항</div>
-                        <div className="text-sm">{clause.improvement?.original}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1">제안 내용</div>
-                        <div className="text-sm font-medium text-emerald-700">{clause.improvement?.suggested}</div>
-                      </div>
-                    </div>
-                    <hr className="my-2" />
-                    <div className="text-xs text-muted-foreground mb-1">개선 설명</div>
-                    <div className="text-sm">{clause.improvement?.explanation}</div>
-                  </div>
-                )) || (
+                  );
+                }) || (
                   <div className="text-center py-8 text-muted-foreground">
                     개선 제안 데이터가 없습니다.
                   </div>
@@ -1101,3 +1105,4 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
     </div>
   )
 }
+
