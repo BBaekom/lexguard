@@ -263,6 +263,8 @@ export function ContractUploader() {
   // 리스크 레벨별 하이라이트 색상 클래스
   const getRiskHighlightClass = (riskLevel: string) => {
     switch (riskLevel) {
+      case 'CRITICAL':
+        return 'bg-purple-200 text-purple-800 border border-purple-300'
       case 'HIGH':
         return 'bg-red-200 text-red-900 border border-red-300'
       case 'MEDIUM':
