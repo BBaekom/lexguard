@@ -324,9 +324,16 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
           (() => {
             if (data.clause_analysis && data.clause_analysis.length > 0) {
               const validClauses = data.clause_analysis.filter((clause: any) => 
-                !clause.risk_assessment?.recommendations?.some((rec: string) => 
-                  rec.trim() === "지금으로도 충분합니다." || 
-                  rec.trim() === "지금으로도 충분합니다"
+                !(
+                  !clause.revised_spans || 
+                  clause.revised_spans === null || 
+                  clause.revised_spans.length === 0 ||
+                  clause.revised_text?.trim() === "지금으로도 충분합니다." ||
+                  clause.revised_text?.trim() === "지금으로도 충분합니다" ||
+                  clause.risk_assessment?.recommendations?.some((rec: string) => 
+                    rec.trim() === "지금으로도 충분합니다." || 
+                    rec.trim() === "지금으로도 충분합니다"
+                  )
                 )
               );
               
@@ -342,9 +349,16 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
           100 - (() => {
             if (data.clause_analysis && data.clause_analysis.length > 0) {
               const validClauses = data.clause_analysis.filter((clause: any) => 
-                !clause.risk_assessment?.recommendations?.some((rec: string) => 
-                  rec.trim() === "지금으로도 충분합니다." || 
-                  rec.trim() === "지금으로도 충분합니다"
+                !(
+                  !clause.revised_spans || 
+                  clause.revised_spans === null || 
+                  clause.revised_spans.length === 0 ||
+                  clause.revised_text?.trim() === "지금으로도 충분합니다." ||
+                  clause.revised_text?.trim() === "지금으로도 충분합니다" ||
+                  clause.risk_assessment?.recommendations?.some((rec: string) => 
+                    rec.trim() === "지금으로도 충분합니다." || 
+                    rec.trim() === "지금으로도 충분합니다"
+                  )
                 )
               );
               
@@ -372,11 +386,19 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
       {
         label: '조항별 리스크 점수',
         data: data.clause_analysis?.map((clause: any) => {
-          // recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로 처리
-          if (clause.risk_assessment?.recommendations?.some((rec: string) => 
-            rec.trim() === "지금으로도 충분합니다." || 
-            rec.trim() === "지금으로도 충분합니다"
-          )) {
+          // revised_spans이 null이거나, revised_text가 "지금으로도 충분합니다."인 경우,
+          // 또는 recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로 처리
+          if (
+            !clause.revised_spans || 
+            clause.revised_spans === null || 
+            clause.revised_spans.length === 0 ||
+            clause.revised_text?.trim() === "지금으로도 충분합니다." ||
+            clause.revised_text?.trim() === "지금으로도 충분합니다" ||
+            clause.risk_assessment?.recommendations?.some((rec: string) => 
+              rec.trim() === "지금으로도 충분합니다." || 
+              rec.trim() === "지금으로도 충분합니다"
+            )
+          ) {
             return 0;
           }
           return clause.risk_assessment?.risk_score ?? 0;
@@ -437,30 +459,30 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
     switch (riskLevel?.toUpperCase()) {
       case 'CRITICAL':
         return {
-          bg: 'bg-purple-100 dark:bg-purple-900',
-          border: 'border-purple-300 dark:border-purple-700',
-          text: 'text-purple-800 dark:text-purple-200',
-          badge: 'bg-purple-600 text-white dark:bg-purple-700 dark:text-white',
-          label: '매우높음',
-          highlight: 'bg-purple-200 text-purple-800' // 보라색 계열로 변경
-        };
-      case 'HIGH':
-        return {
           bg: 'bg-red-50 dark:bg-red-950',
           border: 'border-red-200 dark:border-red-800',
           text: 'text-red-700 dark:text-red-300',
           badge: 'bg-red-500 text-white dark:bg-red-600 dark:text-white',
           label: '높음',
-          highlight: 'bg-red-100/50 dark:bg-red-700/50' // 형관펜 효과용 색상 추가 - 섬세하게
+          highlight: 'bg-red-100/50 dark:bg-red-700/50'
         };
-      case 'MEDIUM':
+      case 'HIGH':
         return {
           bg: 'bg-yellow-50 dark:bg-yellow-950',
           border: 'border-yellow-200 dark:border-yellow-800',
           text: 'text-yellow-700 dark:text-yellow-300',
           badge: 'bg-yellow-500 text-white dark:bg-yellow-600 dark:text-white',
           label: '보통',
-          highlight: 'bg-yellow-100/50 dark:bg-yellow-700/50' // 형관펜 효과용 색상 추가 - 섬세하게
+          highlight: 'bg-yellow-100/50 dark:bg-yellow-700/50'
+        };
+      case 'MEDIUM':
+        return {
+          bg: 'bg-green-50 dark:bg-green-950',
+          border: 'border-green-200 dark:border-green-800',
+          text: 'text-green-700 dark:text-green-300',
+          badge: 'bg-green-500 text-white dark:bg-green-600 dark:text-white',
+          label: '낮음',
+          highlight: 'bg-green-100/50 dark:bg-green-700/50'
         };
       case 'LOW':
         return {
@@ -469,7 +491,7 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
           text: 'text-green-700 dark:text-green-300',
           badge: 'bg-green-500 text-white dark:bg-green-600 dark:text-white',
           label: '낮음',
-          highlight: 'bg-green-100/50 dark:bg-green-700/50' // 형관펜 효과용 색상 추가 - 섬세하게
+          highlight: 'bg-green-100/50 dark:bg-green-700/50'
         };
       default:
         return {
@@ -478,7 +500,7 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
           text: 'text-sky-700 dark:text-sky-300',
           badge: 'bg-sky-500 text-white dark:bg-sky-600 dark:text-white',
           label: '안전',
-          highlight: 'bg-sky-100/50 dark:bg-sky-700/50' // 형관펜 효과용 색상 추가 - 하늘색
+          highlight: 'bg-sky-100/50 dark:bg-sky-700/50'
         };
     }
   };
@@ -516,26 +538,26 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
         switch (level) {
           case 'CRITICAL':
             return {
-              backgroundColor: '#f3e8ff',
-              padding: '2px 6px',
-              fontWeight: '600',
-              color: '#7c3aed',
-              borderRadius: '4px'
-            };
-          case 'HIGH':
-            return {
               backgroundColor: '#fef2f2',
               padding: '2px 6px',
               fontWeight: '600',
               color: '#991b1b',
               borderRadius: '4px'
             };
-          case 'MEDIUM':
+          case 'HIGH':
             return {
               backgroundColor: '#fef3c7',
               padding: '2px 6px',
               fontWeight: '600',
               color: '#92400e',
+              borderRadius: '4px'
+            };
+          case 'MEDIUM':
+            return {
+              backgroundColor: '#f0fdf4',
+              padding: '2px 6px',
+              fontWeight: '600',
+              color: '#065f46',
               borderRadius: '4px'
             };
           case 'LOW':
@@ -681,14 +703,22 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
       const displayClauseText = revisedClauseText || originalClauseText;
       if (!displayClauseText) return;
 
-      // recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로, 등급을 UNKNOWN으로 처리
+      // revised_spans이 null이거나, revised_text가 "지금으로도 충분합니다."인 경우, 
+      // 또는 recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로, 등급을 UNKNOWN으로 처리
       let riskLevel = clause.risk_assessment?.risk_level || 'UNKNOWN';
       let riskScore = clause.risk_assessment?.risk_score || 0;
       
-      if (clause.risk_assessment?.recommendations?.some((rec: string) => 
-        rec.trim() === "지금으로도 충분합니다." || 
-        rec.trim() === "지금으로도 충분합니다"
-      )) {
+      if (
+        !clause.revised_spans || 
+        clause.revised_spans === null || 
+        clause.revised_spans.length === 0 ||
+        clause.revised_text?.trim() === "지금으로도 충분합니다." ||
+        clause.revised_text?.trim() === "지금으로도 충분합니다" ||
+        clause.risk_assessment?.recommendations?.some((rec: string) => 
+          rec.trim() === "지금으로도 충분합니다." || 
+          rec.trim() === "지금으로도 충분합니다"
+        )
+      ) {
         riskLevel = 'UNKNOWN';
         riskScore = 0;
       }
@@ -726,26 +756,26 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
             switch (level) {
               case 'CRITICAL':
                 return {
-                  backgroundColor: '#f3e8ff',
-                  padding: '8px 12px',
-                  fontWeight: '600',
-                  color: '#7c3aed',
-                  borderRadius: '4px'
-                };
-              case 'HIGH':
-                return {
                   backgroundColor: '#fef2f2',
                   padding: '8px 12px',
-                  fontWeight: '500',
+                  fontWeight: '600',
                   color: '#991b1b',
                   borderRadius: '4px'
                 };
-              case 'MEDIUM':
+              case 'HIGH':
                 return {
                   backgroundColor: '#fef3c7',
                   padding: '8px 12px',
                   fontWeight: '500',
                   color: '#92400e',
+                  borderRadius: '4px'
+                };
+              case 'MEDIUM':
+                return {
+                  backgroundColor: '#f0fdf4',
+                  padding: '8px 12px',
+                  fontWeight: '500',
+                  color: '#065f46',
                   borderRadius: '4px'
                 };
               case 'LOW':
@@ -831,16 +861,24 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                             labels: data.clause_analysis.map((clause: any) => clause.original_identifier || clause.clause_id),
                             datasets: [{
                               label: '조항별 리스크 점수',
-                              data: data.clause_analysis.map((clause: any) => {
-                                // recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로 처리
-                                if (clause.risk_assessment?.recommendations?.some((rec: string) => 
-                                  rec.trim() === "지금으로도 충분합니다." || 
-                                  rec.trim() === "지금으로도 충분합니다"
-                                )) {
-                                  return 0;
-                                }
-                                return clause.risk_assessment?.risk_score ?? 0;
-                              }),
+                              data:                 data.clause_analysis.map((clause: any) => {
+                  // revised_spans이 null이거나, revised_text가 "지금으로도 충분합니다."인 경우,
+                  // 또는 recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로 처리
+                  if (
+                    !clause.revised_spans || 
+                    clause.revised_spans === null || 
+                    clause.revised_spans.length === 0 ||
+                    clause.revised_text?.trim() === "지금으로도 충분합니다." ||
+                    clause.revised_text?.trim() === "지금으로도 충분합니다" ||
+                    clause.risk_assessment?.recommendations?.some((rec: string) => 
+                      rec.trim() === "지금으로도 충분합니다." || 
+                      rec.trim() === "지금으로도 충분합니다"
+                    )
+                  ) {
+                    return 0;
+                  }
+                  return clause.risk_assessment?.risk_score ?? 0;
+                }),
                               backgroundColor: '#d97706' // amber-600 색상으로 고정 (전체 리스크 점수 글자 색상과 동일)
                             }]
                           }}
@@ -908,14 +946,22 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                       filteredExplanation = filteredItems.join('\n');
                     }
                     
-                    // recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로, 등급을 UNKNOWN으로 처리
+                    // revised_spans이 null이거나, revised_text가 "지금으로도 충분합니다."인 경우,
+                    // 또는 recommendations가 "지금으로도 충분합니다."인 경우 리스크 점수를 0으로, 등급을 UNKNOWN으로 처리
                     let riskLevel = clause.risk_assessment?.risk_level || 'UNKNOWN';
                     let riskScore = clause.risk_assessment?.risk_score || 0;
                     
-                    if (clause.risk_assessment?.recommendations?.some((rec: string) => 
-                      rec.trim() === "지금으로도 충분합니다." || 
-                      rec.trim() === "지금으로도 충분합니다"
-                    )) {
+                    if (
+                      !clause.revised_spans || 
+                      clause.revised_spans === null || 
+                      clause.revised_spans.length === 0 ||
+                      clause.revised_text?.trim() === "지금으로도 충분합니다." ||
+                      clause.revised_text?.trim() === "지금으로도 충분합니다" ||
+                      clause.risk_assessment?.recommendations?.some((rec: string) => 
+                        rec.trim() === "지금으로도 충분합니다." || 
+                        rec.trim() === "지금으로도 충분합니다"
+                      )
+                    ) {
                       riskLevel = 'UNKNOWN';
                       riskScore = 0;
                     }
@@ -1001,11 +1047,19 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                   const ra = clause?.risk_assessment;
                   let level = String(ra?.risk_level ?? '').toUpperCase().trim();
                   
-                  // 리스크 분석 탭과 동일한 로직 적용
-                  if (ra?.recommendations?.some((rec: string) => 
-                    rec.includes("지금으로도 충분합니다") || 
-                    rec.includes("고려할만한 리스크가 검출되지 않았습니다")
-                  )) {
+                  // revised_spans이 null이거나, revised_text가 "지금으로도 충분합니다."인 경우,
+                  // 또는 recommendations가 "지금으로도 충분합니다."인 경우 UNKNOWN으로 처리
+                  if (
+                    !clause.revised_spans || 
+                    clause.revised_spans === null || 
+                    clause.revised_spans.length === 0 ||
+                    clause.revised_text?.trim() === "지금으로도 충분합니다." ||
+                    clause.revised_text?.trim() === "지금으로도 충분합니다" ||
+                    ra?.recommendations?.some((rec: string) => 
+                      rec.includes("지금으로도 충분합니다") || 
+                      rec.includes("고려할만한 리스크가 검출되지 않았습니다")
+                    )
+                  ) {
                     level = 'UNKNOWN';
                   }
                   
