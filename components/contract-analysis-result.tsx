@@ -884,20 +884,24 @@ export function ContractAnalysisResult({ contractId, analysisData, defaultTab = 
                 <CardContent className="space-y-6 pt-6">
                 {data.clause_analysis
                   ?.map((clause: any, idx: number) => {
-                    // 리스크 분석 설명에서 '근거 부족' 항목만 제거
+                    // 리스크 분석 설명에서 '근거 부족'과 'Sufficient as-is.' 항목 제거
                     let filteredExplanation = clause.risk_assessment?.explanation || '';
                     
-                    // '근거 부족'으로 시작하는 항목들을 제거
+                    // '근거 부족'과 'Sufficient as-is.'로 시작하는 항목들을 제거
                     if (filteredExplanation) {
                       // 줄바꿈이나 세미콜론으로 구분된 항목들을 분리
                       const items = filteredExplanation.split(/[\n;]/).filter((item: string) => item.trim());
                       
-                      // '근거 부족'으로 시작하지 않는 항목들만 유지
+                      // '근거 부족'과 'Sufficient as-is.'로 시작하지 않는 항목들만 유지
                       const filteredItems = items.filter((item: string) => {
                         const trimmedItem = item.trim();
                         return !trimmedItem.startsWith('근거 부족') && 
                                !trimmedItem.startsWith('·근거 부족') &&
-                               !trimmedItem.startsWith('-근거 부족');
+                               !trimmedItem.startsWith('-근거 부족') &&
+                               !trimmedItem.startsWith('Sufficient as-is.') &&
+                               !trimmedItem.startsWith('Sufficient as-is') &&
+                               trimmedItem !== 'Sufficient as-is.' &&
+                               trimmedItem !== 'Sufficient as-is';
                       });
                       
                       // 필터링된 항목들을 다시 조합
