@@ -55,3 +55,12 @@
 * **인프라/배포**: Docker, (옵션) Kubernetes, GitHub Actions(CI/CD)
 * **클라우드**: AWS, Oracle Cloud (환경별 선택)
 * **데이터베이스(메타)**: MySQL/PostgreSQL(문서/사용자/리포트 메타)
+
+# 2. 사진
+~~
+
+# 3. 시스템 구성도
+~~
+
+# 4. 작품 소개영상
+[![[2025 한이음] LLM 기반 계약서 자동 검토 및 리스크 관리 서비스](https://img.youtube.com/vi/Kng082ZPWgQ)](https://www.youtube.com/watch?v=Kng082ZPWgQ)
