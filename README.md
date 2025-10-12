@@ -63,4 +63,4 @@
 ~~
 
 # 4. 작품 소개영상
-[![[2025 한이음] LLM 기반 계약서 자동 검토 및 리스크 관리 서비스](https://img.youtube.com/vi/Kng082ZPWgQ)](https://www.youtube.com/watch?v=Kng082ZPWgQ)
+[![[2025 한이음] LLM 기반 계약서 자동 검토 및 리스크 관리 서비스](https://img.youtube.com/vi/Kng082ZPWgQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=Kng082ZPWgQ)
