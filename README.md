@@ -44,7 +44,8 @@
 ## 1-6. 기술 스택
 
 * **프론트엔드**: React, Next.js, Tailwind CSS, PDF.js(오버레이 시각화)
-* **백엔드**: Python(FastAPI), LangChain(파이프라인 오케스트레이션) - 구현 링크 : https://github.com/ggwanrok/25_HC109
+* **백엔드**: Python(FastAPI), LangChain(파이프라인 오케스트레이션) 
+- 구현 링크 : https://github.com/ggwanrok/25_HC109
 * **AI/ML**
   * **OCR**: (프로젝트 내) Mistral 기반 OCR 파이프라인
   * **LLM**: Gemini 2.5 Flash(의미 해석/요약/개선안 생성)
