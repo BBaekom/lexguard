@@ -43,8 +43,8 @@
 
 ## 1-6. 기술 스택
 
-* **프론트엔드**: React, Next.js, Tailwind CSS, PDF.js(오버레이 시각화)
-* **백엔드**: Python(FastAPI), LangChain(파이프라인 오케스트레이션) 
+* **프론트엔드**: React, Next.js, TypeScript, JavaScript, Tailwind CSS, PDF.js(오버레이 시각화)
+* **백엔드**: Springboot, Next.js, Python(FastAPI), LangChain(파이프라인 오케스트레이션) 
   * 구현 링크 : https://github.com/ggwanrok/25_HC109
 * **AI/ML**
   * **OCR**: (프로젝트 내) Mistral 기반 OCR 파이프라인
@@ -57,7 +57,10 @@
 * **데이터베이스(메타)**: MySQL/PostgreSQL(문서/사용자/리포트 메타)
 
 # 2. 사진
-~~
+| <img width="80" height="100" src="https://i.pinimg.com/280x280_RS/ce/6c/fc/ce6cfc73ef62f44510a64bc62937328f.jpg" > | <img width="80" height="100" alt="image" src="https://i.pinimg.com/280x280_RS/ce/6c/fc/ce6cfc73ef62f44510a64bc62937328f.jpg" > | <img width="80" height="100" alt="image" src="https://i.pinimg.com/280x280_RS/ce/6c/fc/ce6cfc73ef62f44510a64bc62937328f.jpg" > |
+|:---:|:---:|:---:|
+| **이종민** | **문관록** | **조영현** |
+| • 프로젝트 총괄 <br> • 프론트엔드 | • LLM 프롬프팅 <br> • 법률 RAG 구축 | • 백엔드 <br> • DB 구축 |
 
 # 3. 시스템 구성도
 ~~
