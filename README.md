@@ -63,7 +63,9 @@
 | • 프로젝트 총괄 <br> • 프론트엔드 | • LLM 프롬프팅 <br> • 법률 RAG 구축 | • 백엔드 <br> • DB 구축 |
 
 # 3. 시스템 구성도
-~~
+- 서비스 구성도
+<img width="500" height="500" alt="image" src="https://github.com/user-attachments/assets/77f0cb27-68fa-4072-9d3d-75a1a9789b6f" />
+
 
 # 4. 작품 소개영상
 [![[2025 한이음] LLM 기반 계약서 자동 검토 및 리스크 관리 서비스](https://img.youtube.com/vi/Kng082ZPWgQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=Kng082ZPWgQ)
