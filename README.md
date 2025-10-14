@@ -57,7 +57,7 @@
 * **데이터베이스(메타)**: MySQL/PostgreSQL(문서/사용자/리포트 메타)
 
 # 2. 사진
-| <img width="80" height="100" src="https://i.pinimg.com/280x280_RS/ce/6c/fc/ce6cfc73ef62f44510a64bc62937328f.jpg" > | <img width="80" height="100" alt="image" src="https://i.pinimg.com/280x280_RS/ce/6c/fc/ce6cfc73ef62f44510a64bc62937328f.jpg" > | <img width="80" height="100" alt="image" src="https://i.pinimg.com/280x280_RS/ce/6c/fc/ce6cfc73ef62f44510a64bc62937328f.jpg" > |
+| <img width="80" height="100" src="https://github.com/user-attachments/assets/36906c54-5128-4138-8a05-c0c2597d5127" > | <img width="80" height="100" alt="image" src="https://github.com/user-attachments/assets/a6d6f0d8-38ee-4e3d-8a89-92e9a104ebd3" > | <img width="80" height="100" alt="image" src="https://i.pinimg.com/280x280_RS/ce/6c/fc/ce6cfc73ef62f44510a64bc62937328f.jpg" > |
 |:---:|:---:|:---:|
 | **이종민** | **문관록** | **조영현** |
 | • 프로젝트 총괄 <br> • 프론트엔드 | • LLM 프롬프팅 <br> • 법률 RAG 구축 | • 백엔드 <br> • DB 구축 |
